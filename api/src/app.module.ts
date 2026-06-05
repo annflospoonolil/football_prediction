@@ -7,9 +7,21 @@ import { MatchesModule } from './matches/matches.module';
 import { QuestionsModule } from './questions/questions.module';
 import { OptionsModule } from './options/options.module';
 import { AnswersModule } from './answers/answers.module';
-
+import { AdminModule } from './admin/admin.module';
+import { TeamsModule } from './teams/teams.module';
+import { ScheduleModule } from '@nestjs/schedule';
 @Module({
-  imports: [AuthModule, PrismaModule, MatchesModule, QuestionsModule, OptionsModule, AnswersModule],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    MatchesModule,
+    QuestionsModule,
+    OptionsModule,
+    AnswersModule,
+    AdminModule,
+    TeamsModule,
+    ScheduleModule.forRoot(),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

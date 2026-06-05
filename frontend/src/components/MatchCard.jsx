@@ -9,7 +9,7 @@ export default function MatchCard({ match, onClick }) {
       className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 cursor-pointer"
     >
       <h2 className="text-xl font-bold">
-        {match.teamA} vs {match.teamB}
+        {match.teamA.name} vs {match.teamB.name}
       </h2>
       <p className="text-gray-300">Tap to predict ⚽</p>
     </motion.div>

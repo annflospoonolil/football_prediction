@@ -1,5 +1,15 @@
+import { IsString, IsNotEmpty } from 'class-validator';
+
 export class CreateMatchDto {
-  teamA!: string;
-  teamB!: string;
+  @IsString()
+  @IsNotEmpty()
+  teamAId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  teamBId!: string;
+
+  @IsString()
+  @IsNotEmpty()
   kickoffAt!: string;
 }

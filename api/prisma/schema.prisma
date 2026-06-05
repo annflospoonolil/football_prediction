@@ -15,24 +15,32 @@ model User {
   fullName   String
   createdAt  DateTime @default(now())
   answers    Answer[]
+  role       String @default("USER")
 }
 model Match {
   id         String   @id @default(uuid())
-  teamA      String
-  teamB      String
+  teamAId    String
+  teamBId    String
+  teamA      Team @relation("HomeTeam", fields: [teamAId], references: [id])
+  teamB      Team @relation("AwayTeam", fields: [teamBId], references: [id])
   kickoffAt  DateTime
+  stage      String   @default("GROUP") // GROUP, KNOCKOUT, FINAL
+  round      String?
+  isLocked   Boolean  @default(false)
   createdAt  DateTime @default(now())
-  questions Question[]
+  questions  Question[]
+  isCompleted Boolean @default(false)
 }
 model Question {
   id        String   @id @default(uuid())
   text      String
   type      String
   matchId   String
-  match     Match    @relation(fields: [matchId], references: [id])
-
+  match     Match    @relation(fields: [matchId], references: [id],onDelete: Cascade)
+  template  String
   options   Option[]
   answers   Answer[]
+  correctTextAnswer String?
 
   createdAt DateTime @default(now())
 }
@@ -41,11 +49,12 @@ model Option {
   text        String
 
   questionId  String
-  question    Question  @relation(fields: [questionId], references: [id])
+  question    Question  @relation(fields: [questionId], references: [id],onDelete: Cascade)
 
   answers     Answer[]
 
   createdAt   DateTime @default(now())
+  isCorrect   Boolean  @default(false)
 }
 model Answer {
   id         String   @id @default(uuid())
@@ -54,10 +63,25 @@ model Answer {
   questionId String
   optionId   String?
   textAnswer String?
+  selectedOptions Json?
   user        User      @relation(fields: [userId], references: [id])
-  question    Question  @relation(fields: [questionId], references: [id])
-  option      Option?    @relation(fields: [optionId], references: [id])
+  question    Question  @relation(fields: [questionId], references: [id],onDelete: Cascade)
+  option      Option?    @relation(fields: [optionId], references: [id],onDelete: Cascade)
 
   createdAt  DateTime @default(now())
   @@unique([userId, questionId])
+}
+model Team {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  players Player[]
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+}
+
+model Player {
+  id      String   @id @default(uuid())
+  name    String
+  teamId  String
+  team    Team     @relation(fields: [teamId], references: [id])
 }
