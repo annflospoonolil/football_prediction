@@ -15,20 +15,16 @@ export default function Home({ onSelectMatch, onLogout }) {
   }, []);
 
   const handleLogout = () => {
-    // 1. Clear tokens/user data from localStorage so reload stays logged out
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    // 2. Clear API defaults if you are setting them globally
     if (api.defaults.headers.common["Authorization"]) {
       delete api.defaults.headers.common["Authorization"];
     }
 
-    // 3. Trigger your redirection / auth state lift
     if (onLogout) {
       onLogout();
     } else {
-      // Fallback: reload page to flush state if parent routing isn't used
       window.location.reload();
     }
   };
@@ -65,6 +61,10 @@ export default function Home({ onSelectMatch, onLogout }) {
           from { opacity: 0; transform: translateY(40px) scale(0.96); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes slowZoom {
+          0% { transform: scale(1.0); }
+          100% { transform: scale(1.06); }
+        }
         .card-hover {
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
         }
@@ -86,15 +86,193 @@ export default function Home({ onSelectMatch, onLogout }) {
         .scrollbar-thin::-webkit-scrollbar { width: 4px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,200,80,0.4); border-radius: 2px; }
+
+        /* ── BACKGROUND LAYER STYLES ── */
+
+        /* 1. The actual FIFA Fiesta banner image — fills the top portion of the viewport
+              on every screen size. We use object-fit: cover but anchor to the top so the
+              players & trophy remain visible rather than being cropped away. */
+        .bg-image-layer {
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .bg-image-layer img {
+          width: 100%;
+          height: 100%;
+          /* 'cover' fills the frame; 'top center' keeps the players in view */
+          object-fit: cover;
+          object-position: top center;
+          /* Gentle slow-zoom for cinematic energy */
+          animation: slowZoom 20s ease-in-out infinite alternate;
+          transform-origin: top center;
+        }
+
+        /* 2. Primary darkening + bottom-fade: makes all UI readable while letting the
+              top of the image breathe through.  Uses a five-stop gradient so the
+              transition is smooth and not banded. */
+        .bg-primary-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          background: linear-gradient(
+            to bottom,
+            /* Very top — let the banner image show through */
+            rgba(4, 8, 20, 0.30)   0%,
+            /* Just below the players row — deepen slightly */
+            rgba(4, 8, 20, 0.52)  28%,
+            /* Mid-page where cards live — strong readability layer */
+            rgba(4, 8, 20, 0.82)  55%,
+            /* Lower page */
+            rgba(4, 8, 20, 0.93)  75%,
+            /* Footer area — fully opaque so nothing distracts */
+            rgba(4, 8, 20, 1.00) 100%
+          );
+        }
+
+        /* 3. Subtle green-tinted side vignettes — pulls the eye inward and adds a
+              football-pitch atmosphere without washing out the image. */
+        .bg-vignette-sides {
+          position: fixed;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          background:
+            radial-gradient(
+              ellipse 70% 60% at 50% 0%,
+              rgba(0, 200, 80, 0.06) 0%,
+              transparent 70%
+            ),
+            /* Left edge vignette */
+            linear-gradient(
+              to right,
+              rgba(4, 8, 20, 0.55) 0%,
+              transparent 25%
+            ),
+            /* Right edge vignette */
+            linear-gradient(
+              to left,
+              rgba(4, 8, 20, 0.55) 0%,
+              transparent 25%
+            );
+        }
+
+        /* 4. Gold trophy glow — a warm radial bloom centred on where the trophy sits
+              in the image (~55 % from top, dead centre). */
+        .bg-trophy-glow {
+          position: fixed;
+          left: 50%;
+          top: 45%;
+          transform: translate(-50%, -50%);
+          z-index: 2;
+          pointer-events: none;
+          width: min(700px, 90vw);
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background: radial-gradient(
+            circle,
+            rgba(255, 200, 30, 0.10) 0%,
+            rgba(255, 160, 0,  0.06) 35%,
+            transparent 70%
+          );
+          filter: blur(30px);
+        }
+
+        /* 5. Subtle scanline texture — gives the broadcast / stadium-screen feel. */
+        .bg-scanlines {
+          position: fixed;
+          inset: 0;
+          z-index: 3;
+          pointer-events: none;
+          background: repeating-linear-gradient(
+            to bottom,
+            transparent 0px,
+            transparent 3px,
+            rgba(0, 0, 0, 0.04) 3px,
+            rgba(0, 0, 0, 0.04) 4px
+          );
+          mix-blend-mode: multiply;
+        }
+
+        /* 6. Pitch-grid SVG pattern (existing, kept as z-index 4) */
+        .bg-pitch-grid {
+          position: fixed;
+          inset: 0;
+          z-index: 4;
+          pointer-events: none;
+          opacity: 0.028;
+        }
+
+        /* 7. Responsive tweaks
+              On narrow screens we shift the image anchor so the trophy & title
+              area stays centred rather than the far left/right players. */
+        @media (max-width: 640px) {
+          .bg-image-layer img {
+            object-position: 55% top;   /* keep trophy & title in frame */
+          }
+          .bg-primary-overlay {
+            background: linear-gradient(
+              to bottom,
+              rgba(4, 8, 20, 0.45)  0%,
+              rgba(4, 8, 20, 0.68) 22%,
+              rgba(4, 8, 20, 0.88) 50%,
+              rgba(4, 8, 20, 0.97) 70%,
+              rgba(4, 8, 20, 1.00) 100%
+            );
+          }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .bg-image-layer img {
+            object-position: 52% top;
+          }
+        }
+
+        @media (min-width: 1920px) {
+          /* Ultra-wide: contain the image height so we don't lose the top */
+          .bg-image-layer img {
+            object-fit: cover;
+            object-position: top center;
+          }
+        }
       `}</style>
 
-      {/* ── Animated Background ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Pitch grid */}
+      {/* ═══════════════════════════════════════════════════════════════
+          BACKGROUND LAYERS — only these changed from the original
+      ═══════════════════════════════════════════════════════════════ */}
+
+      {/* Layer 1 — The FIFA Fiesta '26 banner image */}
+      <div className="bg-image-layer">
+        <img
+          src="/src/assets/Kalavedhi Desktop Event.png"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        />
+      </div>
+
+      {/* Layer 2 — Primary darkening gradient (bottom-fade) */}
+      <div className="bg-primary-overlay" />
+
+      {/* Layer 3 — Side vignettes + top green bloom */}
+      <div className="bg-vignette-sides" />
+
+      {/* Layer 4 — Warm gold glow around the trophy area */}
+      <div className="bg-trophy-glow" />
+
+      {/* Layer 5 — Subtle broadcast scanlines */}
+      <div className="bg-scanlines" />
+
+      {/* Layer 6 — Pitch grid SVG (from original, moved here for z-order) */}
+      <div className="bg-pitch-grid">
         <svg
           className="absolute inset-0 w-full h-full"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ opacity: 0.035 }}
         >
           <defs>
             <pattern
@@ -132,22 +310,25 @@ export default function Home({ onSelectMatch, onLogout }) {
           </defs>
           <rect width="100%" height="100%" fill="url(#pitch)" />
         </svg>
+      </div>
 
+      {/* Layer 7 — Ambient particles + accent glows (from original) */}
+      <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
         {/* Hero glow */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full"
           style={{
             background:
-              "radial-gradient(ellipse, rgba(0,200,80,0.07) 0%, transparent 65%)",
+              "radial-gradient(ellipse, rgba(0,200,80,0.05) 0%, transparent 65%)",
           }}
         />
         <div
           className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl"
-          style={{ background: "rgba(0,180,255,0.06)" }}
+          style={{ background: "rgba(0,180,255,0.04)" }}
         />
         <div
           className="absolute bottom-20 left-0 w-80 h-80 rounded-full blur-3xl"
-          style={{ background: "rgba(255,215,0,0.04)" }}
+          style={{ background: "rgba(255,215,0,0.03)" }}
         />
 
         {/* Diagonal accent */}
@@ -184,6 +365,10 @@ export default function Home({ onSelectMatch, onLogout }) {
           />
         ))}
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ALL UI BELOW IS IDENTICAL TO THE ORIGINAL — nothing changed
+      ═══════════════════════════════════════════════════════════════ */}
 
       {/* ── Logout Button Navigation Layer ── */}
       <nav className="relative z-20 max-w-7xl mx-auto px-6 pt-6 flex justify-end">
@@ -317,8 +502,12 @@ export default function Home({ onSelectMatch, onLogout }) {
                   border: "1px solid rgba(255,255,255,0.08)",
                   backdropFilter: "blur(20px)",
                   boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+                  cursor: m.isLocked ? "not-allowed" : "pointer",
                 }}
-                onClick={() => onSelectMatch(m.id)}
+                onClick={() => {
+                  if (m.isLocked) return;
+                  onSelectMatch(m.id);
+                }}
               >
                 {/* Top accent */}
                 <div

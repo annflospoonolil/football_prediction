@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import Select from "react-select";
 
 export default function Match({ matchId, goBack }) {
   console.log("MATCH ID RECEIVED:", matchId);
@@ -27,6 +28,9 @@ export default function Match({ matchId, goBack }) {
         const answerRes = await api.get(`/answers/match/${matchId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
+        if (answerRes.data.length === matchRes.data.questions.length) {
+          setSubmitted(true);
+        }
         console.log("USER ANSWERS:", answerRes.data);
         const optionMap = {};
         const textMap = {};
@@ -591,62 +595,128 @@ export default function Match({ matchId, goBack }) {
                   )}
 
                   {/* ── OPTION TYPE ── */}
-                  {q.type === "OPTION" && (
-                    <div className="space-y-2.5">
-                      {q.options?.map((opt) => {
-                        const isSelected = selectedOption[q.id] === opt.id;
-                        return (
-                          <button
-                            disabled={match.isLocked}
-                            key={opt.id}
-                            onClick={() =>
-                              setSelectedOption((prev) => ({
-                                ...prev,
-                                [q.id]: opt.id,
-                              }))
-                            }
-                            className="opt-btn block w-full text-left px-4 py-3.5 rounded-xl text-sm font-semibold border"
-                            style={{
-                              background: isSelected
-                                ? "rgba(0,200,80,0.14)"
-                                : "rgba(255,255,255,0.03)",
-                              borderColor: isSelected
-                                ? "rgba(0,200,80,0.5)"
-                                : "rgba(255,255,255,0.07)",
-                              color: isSelected ? "#00c850" : "#94a3b8",
-                              boxShadow: isSelected
-                                ? "0 0 16px rgba(0,200,80,0.15), inset 0 0 0 1px rgba(0,200,80,0.15)"
-                                : "none",
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border-2"
-                                style={{
-                                  borderColor: isSelected
-                                    ? "#00c850"
-                                    : "rgba(255,255,255,0.2)",
-                                  background: isSelected
-                                    ? "#00c850"
-                                    : "transparent",
-                                }}
-                              >
+                  {q.type === "OPTION" &&
+                    (q.template === "MOTM" ? (
+                      <div className="space-y-2">
+                        <Select
+                          isSearchable
+                          placeholder="🔍 Search player..."
+                          options={q.options.map((opt) => ({
+                            value: opt.id,
+                            label: opt.text,
+                          }))}
+                          value={
+                            q.options
+                              .filter((o) => selectedOption[q.id] === o.id)
+                              .map((o) => ({
+                                value: o.id,
+                                label: o.text,
+                              }))[0] || null
+                          }
+                          onChange={(selected) =>
+                            setSelectedOption((prev) => ({
+                              ...prev,
+                              [q.id]: selected?.value,
+                            }))
+                          }
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                          styles={{
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                            control: (base) => ({
+                              ...base,
+                              background: "#111827",
+                              borderColor: "#374151",
+                              color: "#fff",
+                              minHeight: "48px",
+                            }),
+                            singleValue: (base) => ({
+                              ...base,
+                              color: "#fff",
+                            }),
+                            input: (base) => ({
+                              ...base,
+                              color: "#fff",
+                            }),
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#9ca3af",
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              background: "#111827",
+                              border: "1px solid #374151",
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              background: state.isFocused
+                                ? "#1f2937"
+                                : "#111827",
+                              color: "#fff",
+                              cursor: "pointer",
+                            }),
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {q.options?.map((opt) => {
+                          const isSelected = selectedOption[q.id] === opt.id;
+                          return (
+                            <button
+                              disabled={match.isLocked}
+                              key={opt.id}
+                              onClick={() =>
+                                setSelectedOption((prev) => ({
+                                  ...prev,
+                                  [q.id]: opt.id,
+                                }))
+                              }
+                              className="opt-btn block w-full text-left px-4 py-3.5 rounded-xl text-sm font-semibold border"
+                              style={{
+                                background: isSelected
+                                  ? "rgba(0,200,80,0.14)"
+                                  : "rgba(255,255,255,0.03)",
+                                borderColor: isSelected
+                                  ? "rgba(0,200,80,0.5)"
+                                  : "rgba(255,255,255,0.07)",
+                                color: isSelected ? "#00c850" : "#94a3b8",
+                                boxShadow: isSelected
+                                  ? "0 0 16px rgba(0,200,80,0.15), inset 0 0 0 1px rgba(0,200,80,0.15)"
+                                  : "none",
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border-2"
+                                  style={{
+                                    borderColor: isSelected
+                                      ? "#00c850"
+                                      : "rgba(255,255,255,0.2)",
+                                    background: isSelected
+                                      ? "#00c850"
+                                      : "transparent",
+                                  }}
+                                >
+                                  {isSelected && (
+                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                <span>{opt.text}</span>
                                 {isSelected && (
-                                  <div className="w-2 h-2 rounded-full bg-white" />
+                                  <span className="ml-auto text-xs font-black uppercase tracking-widest text-green-400">
+                                    ✓ Selected
+                                  </span>
                                 )}
                               </div>
-                              <span>{opt.text}</span>
-                              {isSelected && (
-                                <span className="ml-auto text-xs font-black uppercase tracking-widest text-green-400">
-                                  ✓ Selected
-                                </span>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
 
                   {/* ── MULTI_SELECT TYPE ── */}
                   {q.type === "MULTI_SELECT" &&
@@ -912,7 +982,7 @@ export default function Match({ matchId, goBack }) {
                 </div>
               ) : (
                 <button
-                  disabled={match.isLocked || submitting}
+                  disabled={match.isLocked || submitting || submitted}
                   className="submit-btn w-full py-5 rounded-2xl text-white font-black text-lg tracking-wider disabled:opacity-40"
                   style={{
                     background: match.isLocked

@@ -19,20 +19,21 @@ export default function Leaderboard({ goBack }) {
   const podiumOrder =
     topThree.length === 3 ? [topThree[1], topThree[0], topThree[2]] : topThree;
 
+  // Indexed by true rank: [0]=1st/gold, [1]=2nd/silver, [2]=3rd/bronze
   const podiumStyles = [
-    {
-      height: "100px",
-      color: "#94a3b8",
-      rank: 2,
-      label: "2nd",
-      glow: "rgba(148,163,184,0.3)",
-    },
     {
       height: "130px",
       color: "#ffd700",
       rank: 1,
       label: "1st",
       glow: "rgba(255,215,0,0.4)",
+    },
+    {
+      height: "100px",
+      color: "#94a3b8",
+      rank: 2,
+      label: "2nd",
+      glow: "rgba(148,163,184,0.3)",
     },
     {
       height: "80px",
@@ -245,19 +246,11 @@ export default function Leaderboard({ goBack }) {
             <div className="flex items-end justify-center gap-3 sm:gap-5 px-2">
               {(topThree.length === 3 ? podiumOrder : topThree).map(
                 (u, pIdx) => {
-                  const style =
-                    topThree.length === 3
-                      ? podiumStyles[pIdx]
-                      : podiumStyles[pIdx];
-                  const originalRank =
-                    topThree.length === 3
-                      ? pIdx === 0
-                        ? 1
-                        : pIdx === 1
-                          ? 0
-                          : 2
-                      : pIdx;
-                  const trueRank = topThree.indexOf(u);
+                  // trueRank = position in original sorted topThree array (0=1st, 1=2nd, 2=3rd)
+                  const trueRank = topThree.findIndex(
+                    (p) => p.userId === u.userId,
+                  );
+                  const style = podiumStyles[trueRank];
                   const isFirst = trueRank === 0;
 
                   return (

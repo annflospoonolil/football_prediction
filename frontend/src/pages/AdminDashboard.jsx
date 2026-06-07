@@ -582,6 +582,40 @@ export default function AdminDashboard() {
                       </>
                     )}
                   </button>
+                  <button
+                    className="admin-btn"
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          "Are you sure you want to delete this match?\n\nThis action cannot be undone.",
+                        )
+                      )
+                        return;
+
+                      try {
+                        await api.delete(`/admin/matches/${m.id}`, {
+                          headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                          },
+                        });
+
+                        alert("Match deleted successfully!");
+
+                        loadMatches();
+                      } catch (err) {
+                        console.error(err);
+                        alert("Failed to delete match");
+                      }
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #dc2626, #991b1b)",
+                      color: "#fff",
+                      boxShadow: "0 0 14px rgba(220,38,38,0.2)",
+                    }}
+                  >
+                    <span>🗑️</span>
+                    <span>Delete Match</span>
+                  </button>
                 </div>
 
                 {/* ── Expanded Questions ── */}
