@@ -1,4 +1,12 @@
-import { Controller, Post, Patch, Get, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Get,
+  Body,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -39,5 +47,9 @@ export class AdminController {
   @Patch('matches/:id/complete')
   completeMatch(@Param('id') id: string) {
     return this.adminService.completeMatch(id);
+  }
+  @Delete('matches/:id')
+  deleteMatch(@Param('id') id: string) {
+    return this.adminService.deleteMatch(id);
   }
 }

@@ -64,7 +64,7 @@ export class AnswersService {
 
     const matchStarted = new Date() >= new Date(question.match.kickoffAt);
 
-    if (matchStarted) {
+    if (question.match.isLocked || matchStarted) {
       throw new ForbiddenException(
         'Match already started. Predictions are closed.',
       );

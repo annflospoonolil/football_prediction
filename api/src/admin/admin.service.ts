@@ -77,4 +77,9 @@ export class AdminService {
       data: { isCompleted: true },
     });
   }
+  async deleteMatch(matchId: string) {
+    return this.prisma.match.delete({
+      where: { id: matchId },
+    });
+  }
 }
