@@ -100,7 +100,12 @@ export class AnswersService {
       },
     });
   }
+  private leaderboardCache: any = null;
+  private cacheTime = 0;
   async getLeaderboard() {
+    if (this.leaderboardCache && Date.now() - this.cacheTime < 60000) {
+      return this.leaderboardCache;
+    }
     const answers = await this.prisma.answer.findMany({
       include: {
         question: {
@@ -168,7 +173,12 @@ export class AnswersService {
         scoreMap[userId].score += matched;
       }
     }
+    const leaderboard = Object.values(scoreMap).sort(
+      (a: any, b: any) => b.score - a.score,
+    );
+    this.leaderboardCache = leaderboard;
+    this.cacheTime = Date.now();
 
-    return Object.values(scoreMap).sort((a: any, b: any) => b.score - a.score);
+    return leaderboard;
   }
 }

@@ -1649,6 +1649,7 @@ async function main() {
     // =========================
     // 🔥 OPTION 1: CLEAN RESET (PUT THIS FIRST)
     // =========================
+    await prisma.user.deleteMany();
     await prisma.option.deleteMany();
     await prisma.question.deleteMany();
     await prisma.match.deleteMany();
@@ -1661,10 +1662,10 @@ async function main() {
       where: { email: 'admin@gmail.com' },
       update: {},
       create: {
-        collegeId: 'admin1',
+        collegeId: 'annflopoonolil',
         email: 'admin@gmail.com',
         fullName: 'System Admin',
-        password: await bcrypt.hash('admin123', 10),
+        password: await bcrypt.hash('1811171624', 10),
         role: 'ADMIN',
       },
     });
