@@ -52,8 +52,6 @@ export default function App() {
     ) : (
       <Login
         onLogin={(userRole, token) => {
-          console.log("LOGIN ROLE:", userRole);
-
           // Save parameters to localStorage so a reload doesn't wipe them
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userRole", userRole);
@@ -91,10 +89,10 @@ export default function App() {
       </div>
 
       {/* VIEW CONDITIONAL ROUTING ELEMENT */}
-      {role === "ADMIN" ? (
-        <AdminDashboard onLogout={handleLogout} />
-      ) : showLeaderboard ? (
+      {showLeaderboard ? (
         <Leaderboard goBack={() => setShowLeaderboard(false)} />
+      ) : role === "ADMIN" ? (
+        <AdminDashboard onLogout={handleLogout} />
       ) : selectedMatchId ? (
         <Match
           matchId={selectedMatchId}

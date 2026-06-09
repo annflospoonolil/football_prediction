@@ -15,8 +15,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateMatchDto } from './dto/create-match.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
-@Controller('admin')
+@Roles('ADMIN')
+@Controller('ADMIN')
 export class AdminController {
   constructor(private adminService: AdminService) {}
 

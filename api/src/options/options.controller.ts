@@ -33,6 +33,8 @@ export class OptionsController {
   remove(@Param('id') id: string) {
     return this.optionsService.remove(id);
   }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id/toggle-correct')
   toggleCorrect(@Param('id') id: string) {
     return this.optionsService.toggleCorrect(id);

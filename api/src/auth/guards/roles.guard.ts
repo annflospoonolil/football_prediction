@@ -11,12 +11,10 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>(
-      'roles',
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
       context.getHandler(),
-    );
-
-    if (!requiredRoles) return true;
+      context.getClass(),
+    ]);
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
@@ -24,6 +22,8 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('No user found');
     }
+
+    if (!requiredRoles) return true;
 
     if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException('Admin access only');

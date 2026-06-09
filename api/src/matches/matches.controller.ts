@@ -6,11 +6,6 @@ import { CreateMatchDto } from './dto/create-match.dto';
 export class MatchesController {
   constructor(private matchesService: MatchesService) {}
 
-  @Post()
-  create(@Body() dto: CreateMatchDto) {
-    return this.matchesService.createMatch(dto);
-  }
-
   // 🔥 ADD THIS
   @Get()
   getAllMatches() {

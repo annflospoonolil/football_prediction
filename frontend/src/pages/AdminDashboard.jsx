@@ -49,8 +49,6 @@ export default function AdminDashboard() {
   const loadMatchDetails = async (matchId) => {
     try {
       const res = await api.get(`/matches/${matchId}`);
-      console.log("Loading match:", matchId);
-      console.log("MATCH DATA:", res.data);
       setMatchDetails((prev) => ({ ...prev, [matchId]: res.data }));
     } catch (err) {
       console.error(err);
@@ -620,447 +618,228 @@ export default function AdminDashboard() {
 
                 {/* ── Expanded Questions ── */}
                 {expandedMatchId === m.id &&
-                  matchDetails[m.id]?.questions?.map(
-                    (q, qIdx) => (
-                      console.log("q", q),
-                      (
-                        <div
-                          key={q.id}
-                          className="mt-4 rounded-2xl overflow-hidden"
-                          style={{
-                            background: "rgba(0,0,0,0.25)",
-                            border: "1px solid rgba(255,255,255,0.07)",
-                            animation: `fadeUp 0.3s ease ${qIdx * 0.06}s both`,
-                          }}
-                        >
-                          {/* Q header */}
-                          <div
-                            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                  matchDetails[m.id]?.questions?.map((q, qIdx) => (
+                    <div
+                      key={q.id}
+                      className="mt-4 rounded-2xl overflow-hidden"
+                      style={{
+                        background: "rgba(0,0,0,0.25)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        animation: `fadeUp 0.3s ease ${qIdx * 0.06}s both`,
+                      }}
+                    >
+                      {/* Q header */}
+                      <div
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black"
                             style={{
-                              borderBottom: "1px solid rgba(255,255,255,0.05)",
+                              background: "rgba(168,85,247,0.16)",
+                              border: "1px solid rgba(168,85,247,0.25)",
+                              color: "#c084fc",
+                              fontFamily: "'Rajdhani', sans-serif",
                             }}
                           >
-                            <div className="flex items-center gap-2.5 flex-wrap">
-                              <span
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black"
-                                style={{
-                                  background: "rgba(168,85,247,0.16)",
-                                  border: "1px solid rgba(168,85,247,0.25)",
-                                  color: "#c084fc",
-                                  fontFamily: "'Rajdhani', sans-serif",
-                                }}
-                              >
-                                {qIdx + 1}
-                              </span>
-                              <h3 className="font-bold text-sm text-white">
-                                {q.text}
-                              </h3>
-                              <span
-                                className="text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest"
-                                style={{
-                                  background:
-                                    q.type === "OPTION"
-                                      ? "rgba(59,130,246,0.12)"
-                                      : q.type === "SCORE"
-                                        ? "rgba(255,215,0,0.1)"
-                                        : "rgba(168,85,247,0.1)",
-                                  border: `1px solid ${q.type === "OPTION" ? "rgba(59,130,246,0.25)" : q.type === "SCORE" ? "rgba(255,215,0,0.2)" : "rgba(168,85,247,0.2)"}`,
-                                  color:
-                                    q.type === "OPTION"
-                                      ? "#60a5fa"
-                                      : q.type === "SCORE"
-                                        ? "#ffd700"
-                                        : "#c084fc",
-                                  fontFamily: "'Rajdhani', sans-serif",
-                                }}
-                              >
-                                {q.type}
-                              </span>
-                            </div>
-                          </div>
+                            {qIdx + 1}
+                          </span>
+                          <h3 className="font-bold text-sm text-white">
+                            {q.text}
+                          </h3>
+                          <span
+                            className="text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest"
+                            style={{
+                              background:
+                                q.type === "OPTION"
+                                  ? "rgba(59,130,246,0.12)"
+                                  : q.type === "SCORE"
+                                    ? "rgba(255,215,0,0.1)"
+                                    : "rgba(168,85,247,0.1)",
+                              border: `1px solid ${q.type === "OPTION" ? "rgba(59,130,246,0.25)" : q.type === "SCORE" ? "rgba(255,215,0,0.2)" : "rgba(168,85,247,0.2)"}`,
+                              color:
+                                q.type === "OPTION"
+                                  ? "#60a5fa"
+                                  : q.type === "SCORE"
+                                    ? "#ffd700"
+                                    : "#c084fc",
+                              fontFamily: "'Rajdhani', sans-serif",
+                            }}
+                          >
+                            {q.type}
+                          </span>
+                        </div>
+                      </div>
 
-                          <div className="px-4 py-4">
-                            {/* SCORE */}
-                            {q.type === "SCORE" && (
-                              <div
-                                className="p-4 rounded-xl max-w-md"
-                                style={{
-                                  background: "rgba(255,215,0,0.04)",
-                                  border: "1px solid rgba(255,215,0,0.12)",
-                                }}
-                              >
-                                <p className="text-xs font-black uppercase tracking-widest text-yellow-500/60 mb-3">
-                                  🏆 Set Official Result
-                                </p>
-                                <p
-                                  className="font-bold text-sm text-white mb-4"
+                      <div className="px-4 py-4">
+                        {/* SCORE */}
+                        {q.type === "SCORE" && (
+                          <div
+                            className="p-4 rounded-xl max-w-md"
+                            style={{
+                              background: "rgba(255,215,0,0.04)",
+                              border: "1px solid rgba(255,215,0,0.12)",
+                            }}
+                          >
+                            <p className="text-xs font-black uppercase tracking-widest text-yellow-500/60 mb-3">
+                              🏆 Set Official Result
+                            </p>
+                            <p
+                              className="font-bold text-sm text-white mb-4"
+                              style={{
+                                fontFamily: "'Rajdhani', sans-serif",
+                              }}
+                            >
+                              {m.teamA.name}{" "}
+                              <span className="text-gray-500 font-normal">
+                                vs
+                              </span>{" "}
+                              {m.teamB.name}
+                            </p>
+                            <div className="flex items-end gap-3">
+                              <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wide mb-1">
+                                  {m.teamA.name}
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  placeholder="0"
+                                  className="w-20 px-3 py-2.5 rounded-xl font-mono text-center text-white text-xl font-black"
                                   style={{
+                                    background: "rgba(0,0,0,0.45)",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    outline: "none",
                                     fontFamily: "'Rajdhani', sans-serif",
                                   }}
-                                >
-                                  {m.teamA.name}{" "}
-                                  <span className="text-gray-500 font-normal">
-                                    vs
-                                  </span>{" "}
+                                  value={optionInputs[`scoreA_${q.id}`] ?? ""}
+                                  onChange={(e) =>
+                                    setOptionInputs((p) => ({
+                                      ...p,
+                                      [`scoreA_${q.id}`]: e.target.value,
+                                    }))
+                                  }
+                                />
+                              </div>
+                              <div
+                                className="text-xl font-black text-gray-600 pb-2"
+                                style={{
+                                  fontFamily: "'Rajdhani', sans-serif",
+                                }}
+                              >
+                                —
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wide mb-1">
                                   {m.teamB.name}
-                                </p>
-                                <div className="flex items-end gap-3">
-                                  <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wide mb-1">
-                                      {m.teamA.name}
-                                    </label>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      placeholder="0"
-                                      className="w-20 px-3 py-2.5 rounded-xl font-mono text-center text-white text-xl font-black"
-                                      style={{
-                                        background: "rgba(0,0,0,0.45)",
-                                        border:
-                                          "1px solid rgba(255,255,255,0.1)",
-                                        outline: "none",
-                                        fontFamily: "'Rajdhani', sans-serif",
-                                      }}
-                                      value={
-                                        optionInputs[`scoreA_${q.id}`] ?? ""
-                                      }
-                                      onChange={(e) =>
-                                        setOptionInputs((p) => ({
-                                          ...p,
-                                          [`scoreA_${q.id}`]: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <div
-                                    className="text-xl font-black text-gray-600 pb-2"
-                                    style={{
-                                      fontFamily: "'Rajdhani', sans-serif",
-                                    }}
-                                  >
-                                    —
-                                  </div>
-                                  <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wide mb-1">
-                                      {m.teamB.name}
-                                    </label>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      placeholder="0"
-                                      className="w-20 px-3 py-2.5 rounded-xl font-mono text-center text-white text-xl font-black"
-                                      style={{
-                                        background: "rgba(0,0,0,0.45)",
-                                        border:
-                                          "1px solid rgba(255,255,255,0.1)",
-                                        outline: "none",
-                                        fontFamily: "'Rajdhani', sans-serif",
-                                      }}
-                                      value={
-                                        optionInputs[`scoreB_${q.id}`] ?? ""
-                                      }
-                                      onChange={(e) =>
-                                        setOptionInputs((p) => ({
-                                          ...p,
-                                          [`scoreB_${q.id}`]: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <button
-                                    className="admin-btn ml-2"
-                                    style={{
-                                      background:
-                                        "linear-gradient(135deg, #16a34a, #15803d)",
-                                      color: "#fff",
-                                      boxShadow: "0 0 12px rgba(0,200,80,0.2)",
-                                    }}
-                                    onClick={async () => {
-                                      try {
-                                        const valA =
-                                          optionInputs[`scoreA_${q.id}`] || "0";
-                                        const valB =
-                                          optionInputs[`scoreB_${q.id}`] || "0";
-                                        await api.patch(
-                                          `/questions/${q.id}/correct-text`,
-                                          { answer: `${valA}-${valB}` },
-                                          {
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                            },
-                                          },
-                                        );
-                                        loadMatchDetails(m.id);
-                                      } catch (err) {
-                                        console.error(
-                                          "Failed saving final score:",
-                                          err,
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    💾 Save
-                                  </button>
-                                </div>
-                                {q.correctTextAnswer && (
-                                  <div className="mt-4 flex items-center gap-2 text-green-400 text-xs font-bold pt-3 border-t border-white/5">
-                                    <span>✅ Verified:</span>
-                                    <span
-                                      className="px-2.5 py-0.5 rounded-lg font-mono text-sm"
-                                      style={{
-                                        background: "rgba(0,200,80,0.1)",
-                                        border: "1px solid rgba(0,200,80,0.2)",
-                                      }}
-                                    >
-                                      {q.correctTextAnswer}
-                                    </span>
-                                  </div>
-                                )}
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  placeholder="0"
+                                  className="w-20 px-3 py-2.5 rounded-xl font-mono text-center text-white text-xl font-black"
+                                  style={{
+                                    background: "rgba(0,0,0,0.45)",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    outline: "none",
+                                    fontFamily: "'Rajdhani', sans-serif",
+                                  }}
+                                  value={optionInputs[`scoreB_${q.id}`] ?? ""}
+                                  onChange={(e) =>
+                                    setOptionInputs((p) => ({
+                                      ...p,
+                                      [`scoreB_${q.id}`]: e.target.value,
+                                    }))
+                                  }
+                                />
+                              </div>
+                              <button
+                                className="admin-btn ml-2"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #16a34a, #15803d)",
+                                  color: "#fff",
+                                  boxShadow: "0 0 12px rgba(0,200,80,0.2)",
+                                }}
+                                onClick={async () => {
+                                  try {
+                                    const valA =
+                                      optionInputs[`scoreA_${q.id}`] || "0";
+                                    const valB =
+                                      optionInputs[`scoreB_${q.id}`] || "0";
+                                    await api.patch(
+                                      `/questions/${q.id}/correct-text`,
+                                      { answer: `${valA}-${valB}` },
+                                      {
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                        },
+                                      },
+                                    );
+                                    loadMatchDetails(m.id);
+                                  } catch (err) {
+                                    console.error(
+                                      "Failed saving final score:",
+                                      err,
+                                    );
+                                  }
+                                }}
+                              >
+                                💾 Save
+                              </button>
+                            </div>
+                            {q.correctTextAnswer && (
+                              <div className="mt-4 flex items-center gap-2 text-green-400 text-xs font-bold pt-3 border-t border-white/5">
+                                <span>✅ Verified:</span>
+                                <span
+                                  className="px-2.5 py-0.5 rounded-lg font-mono text-sm"
+                                  style={{
+                                    background: "rgba(0,200,80,0.1)",
+                                    border: "1px solid rgba(0,200,80,0.2)",
+                                  }}
+                                >
+                                  {q.correctTextAnswer}
+                                </span>
                               </div>
                             )}
+                          </div>
+                        )}
 
-                            {/* OPTION / MULTI_SELECT */}
-                            {(q.type === "OPTION" ||
-                              q.type === "MULTI_SELECT") && (
-                              <>
-                                <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">
-                                  Options
-                                </p>
-                                {q.options?.length > 0 ? (
-                                  <div className="space-y-2 mb-4">
-                                    {q.options.map((o) => (
-                                      <div
-                                        key={o.id}
-                                        className="flex items-center gap-2 flex-wrap"
-                                      >
-                                        <div
-                                          className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
-                                          style={{
-                                            background: o.isCorrect
-                                              ? "rgba(0,200,80,0.08)"
-                                              : "rgba(255,255,255,0.04)",
-                                            border: `1px solid ${o.isCorrect ? "rgba(0,200,80,0.3)" : "rgba(255,255,255,0.07)"}`,
-                                            color: o.isCorrect
-                                              ? "#00c850"
-                                              : "#94a3b8",
-                                          }}
-                                        >
-                                          <span>{o.isCorrect ? "✔" : "•"}</span>
-                                          <span className="truncate">
-                                            {o.text}
-                                          </span>
-                                          {o.isCorrect && (
-                                            <span className="ml-auto text-xs font-black text-green-400 uppercase tracking-widest">
-                                              Correct
-                                            </span>
-                                          )}
-                                        </div>
-                                        <button
-                                          className="admin-btn"
-                                          style={{
-                                            background: "rgba(255,215,0,0.1)",
-                                            border:
-                                              "1px solid rgba(255,215,0,0.25)",
-                                            color: "#ffd700",
-                                            padding: "7px 10px",
-                                          }}
-                                          onClick={async () => {
-                                            try {
-                                              const ep =
-                                                q.type === "MULTI_SELECT"
-                                                  ? `/options/${o.id}/toggle-correct`
-                                                  : `/options/${o.id}/correct`;
-                                              await api.patch(
-                                                ep,
-                                                {},
-                                                {
-                                                  headers: {
-                                                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                                  },
-                                                },
-                                              );
-                                              loadMatchDetails(m.id);
-                                            } catch (err) {
-                                              console.error(err);
-                                            }
-                                          }}
-                                        >
-                                          ✓ Correct
-                                        </button>
-                                        <button
-                                          className="admin-btn"
-                                          style={{
-                                            background: "rgba(239,68,68,0.1)",
-                                            border:
-                                              "1px solid rgba(239,68,68,0.2)",
-                                            color: "#f87171",
-                                            padding: "7px 10px",
-                                          }}
-                                          onClick={async () => {
-                                            if (!confirm("Delete option?"))
-                                              return;
-                                            try {
-                                              await api.delete(
-                                                `/options/${o.id}`,
-                                                {
-                                                  headers: {
-                                                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                                  },
-                                                },
-                                              );
-                                              loadMatchDetails(m.id);
-                                            } catch (err) {
-                                              console.error(err);
-                                            }
-                                          }}
-                                        >
-                                          🗑
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-gray-600 mb-3 italic">
-                                    No options added yet
-                                  </p>
-                                )}
-
-                                {/* Add Option */}
-                                <div className="flex gap-2 flex-wrap">
-                                  <input
-                                    style={{
-                                      ...inputBase,
-                                      width: "auto",
-                                      flex: "1 1 160px",
-                                    }}
-                                    placeholder="New option text…"
-                                    value={optionInputs[q.id] || ""}
-                                    onChange={(e) =>
-                                      setOptionInputs({
-                                        ...optionInputs,
-                                        [q.id]: e.target.value,
-                                      })
-                                    }
-                                    onFocus={focusInput}
-                                    onBlur={blurInput}
-                                  />
-                                  <button
-                                    className="admin-btn"
-                                    style={{
-                                      background:
-                                        "linear-gradient(135deg, #16a34a, #15803d)",
-                                      color: "#fff",
-                                      boxShadow: "0 0 12px rgba(0,200,80,0.18)",
-                                    }}
-                                    onClick={async () => {
-                                      try {
-                                        await api.post(
-                                          "/options",
-                                          {
-                                            questionId: q.id,
-                                            text: optionInputs[q.id],
-                                          },
-                                          {
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                            },
-                                          },
-                                        );
-                                        setOptionInputs({
-                                          ...optionInputs,
-                                          [q.id]: "",
-                                        });
-                                        loadMatchDetails(m.id);
-                                      } catch (err) {
-                                        console.error(err);
-                                      }
-                                    }}
+                        {/* OPTION / MULTI_SELECT */}
+                        {(q.type === "OPTION" || q.type === "MULTI_SELECT") && (
+                          <>
+                            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">
+                              Options
+                            </p>
+                            {q.options?.length > 0 ? (
+                              <div className="space-y-2 mb-4">
+                                {q.options.map((o) => (
+                                  <div
+                                    key={o.id}
+                                    className="flex items-center gap-2 flex-wrap"
                                   >
-                                    ✚ Add Option
-                                  </button>
-                                </div>
-                              </>
-                            )}
-
-                            {/* TEXT */}
-                            {q.type === "TEXT" && (
-                              <div className="mt-2">
-                                {!q.correctTextAnswer ||
-                                editingTextAnswer[q.id] ? (
-                                  <div className="flex gap-2 flex-wrap">
-                                    <input
-                                      style={{
-                                        ...inputBase,
-                                        width: "auto",
-                                        flex: "1 1 160px",
-                                      }}
-                                      placeholder="Correct answer…"
-                                      value={
-                                        optionInputs["correct_" + q.id] ||
-                                        q.correctTextAnswer ||
-                                        ""
-                                      }
-                                      onChange={(e) =>
-                                        setOptionInputs({
-                                          ...optionInputs,
-                                          ["correct_" + q.id]: e.target.value,
-                                        })
-                                      }
-                                      onFocus={focusInput}
-                                      onBlur={blurInput}
-                                    />
-                                    <button
-                                      className="admin-btn"
-                                      style={{
-                                        background:
-                                          "linear-gradient(135deg, #ca8a04, #a16207)",
-                                        color: "#fff",
-                                        boxShadow:
-                                          "0 0 12px rgba(255,215,0,0.18)",
-                                      }}
-                                      onClick={async () => {
-                                        try {
-                                          await api.patch(
-                                            `/questions/${q.id}/correct-text`,
-                                            {
-                                              answer:
-                                                optionInputs["correct_" + q.id],
-                                            },
-                                            {
-                                              headers: {
-                                                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                              },
-                                            },
-                                          );
-                                          setEditingTextAnswer({
-                                            ...editingTextAnswer,
-                                            [q.id]: false,
-                                          });
-                                          setOptionInputs({
-                                            ...optionInputs,
-                                            ["correct_" + q.id]: "",
-                                          });
-                                          loadMatchDetails(m.id);
-                                        } catch (err) {
-                                          console.error(err);
-                                        }
-                                      }}
-                                    >
-                                      {q.correctTextAnswer
-                                        ? "💾 Update"
-                                        : "✓ Set Answer"}
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-3 flex-wrap">
                                     <div
-                                      className="px-4 py-2.5 rounded-xl text-green-400 font-semibold text-sm"
+                                      className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
                                       style={{
-                                        background: "rgba(0,200,80,0.08)",
-                                        border: "1px solid rgba(0,200,80,0.25)",
+                                        background: o.isCorrect
+                                          ? "rgba(0,200,80,0.08)"
+                                          : "rgba(255,255,255,0.04)",
+                                        border: `1px solid ${o.isCorrect ? "rgba(0,200,80,0.3)" : "rgba(255,255,255,0.07)"}`,
+                                        color: o.isCorrect
+                                          ? "#00c850"
+                                          : "#94a3b8",
                                       }}
                                     >
-                                      ✅ {q.correctTextAnswer}
+                                      <span>{o.isCorrect ? "✔" : "•"}</span>
+                                      <span className="truncate">{o.text}</span>
+                                      {o.isCorrect && (
+                                        <span className="ml-auto text-xs font-black text-green-400 uppercase tracking-widest">
+                                          Correct
+                                        </span>
+                                      )}
                                     </div>
                                     <button
                                       className="admin-btn"
@@ -1069,25 +848,222 @@ export default function AdminDashboard() {
                                         border:
                                           "1px solid rgba(255,215,0,0.25)",
                                         color: "#ffd700",
+                                        padding: "7px 10px",
                                       }}
-                                      onClick={() =>
-                                        setEditingTextAnswer({
-                                          ...editingTextAnswer,
-                                          [q.id]: true,
-                                        })
-                                      }
+                                      onClick={async () => {
+                                        try {
+                                          const ep =
+                                            q.type === "MULTI_SELECT"
+                                              ? `/options/${o.id}/toggle-correct`
+                                              : `/options/${o.id}/correct`;
+                                          await api.patch(
+                                            ep,
+                                            {},
+                                            {
+                                              headers: {
+                                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                              },
+                                            },
+                                          );
+                                          loadMatchDetails(m.id);
+                                        } catch (err) {
+                                          console.error(err);
+                                        }
+                                      }}
                                     >
-                                      ✏ Update
+                                      ✓ Correct
+                                    </button>
+                                    <button
+                                      className="admin-btn"
+                                      style={{
+                                        background: "rgba(239,68,68,0.1)",
+                                        border: "1px solid rgba(239,68,68,0.2)",
+                                        color: "#f87171",
+                                        padding: "7px 10px",
+                                      }}
+                                      onClick={async () => {
+                                        if (!confirm("Delete option?")) return;
+                                        try {
+                                          await api.delete(`/options/${o.id}`, {
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                            },
+                                          });
+                                          loadMatchDetails(m.id);
+                                        } catch (err) {
+                                          console.error(err);
+                                        }
+                                      }}
+                                    >
+                                      🗑
                                     </button>
                                   </div>
-                                )}
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-600 mb-3 italic">
+                                No options added yet
+                              </p>
+                            )}
+
+                            {/* Add Option */}
+                            <div className="flex gap-2 flex-wrap">
+                              <input
+                                style={{
+                                  ...inputBase,
+                                  width: "auto",
+                                  flex: "1 1 160px",
+                                }}
+                                placeholder="New option text…"
+                                value={optionInputs[q.id] || ""}
+                                onChange={(e) =>
+                                  setOptionInputs({
+                                    ...optionInputs,
+                                    [q.id]: e.target.value,
+                                  })
+                                }
+                                onFocus={focusInput}
+                                onBlur={blurInput}
+                              />
+                              <button
+                                className="admin-btn"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #16a34a, #15803d)",
+                                  color: "#fff",
+                                  boxShadow: "0 0 12px rgba(0,200,80,0.18)",
+                                }}
+                                onClick={async () => {
+                                  try {
+                                    await api.post(
+                                      "/options",
+                                      {
+                                        questionId: q.id,
+                                        text: optionInputs[q.id],
+                                      },
+                                      {
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                        },
+                                      },
+                                    );
+                                    setOptionInputs({
+                                      ...optionInputs,
+                                      [q.id]: "",
+                                    });
+                                    loadMatchDetails(m.id);
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                }}
+                              >
+                                ✚ Add Option
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {/* TEXT */}
+                        {q.type === "TEXT" && (
+                          <div className="mt-2">
+                            {!q.correctTextAnswer || editingTextAnswer[q.id] ? (
+                              <div className="flex gap-2 flex-wrap">
+                                <input
+                                  style={{
+                                    ...inputBase,
+                                    width: "auto",
+                                    flex: "1 1 160px",
+                                  }}
+                                  placeholder="Correct answer…"
+                                  value={
+                                    optionInputs["correct_" + q.id] ||
+                                    q.correctTextAnswer ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    setOptionInputs({
+                                      ...optionInputs,
+                                      ["correct_" + q.id]: e.target.value,
+                                    })
+                                  }
+                                  onFocus={focusInput}
+                                  onBlur={blurInput}
+                                />
+                                <button
+                                  className="admin-btn"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, #ca8a04, #a16207)",
+                                    color: "#fff",
+                                    boxShadow: "0 0 12px rgba(255,215,0,0.18)",
+                                  }}
+                                  onClick={async () => {
+                                    try {
+                                      await api.patch(
+                                        `/questions/${q.id}/correct-text`,
+                                        {
+                                          answer:
+                                            optionInputs["correct_" + q.id],
+                                        },
+                                        {
+                                          headers: {
+                                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                          },
+                                        },
+                                      );
+                                      setEditingTextAnswer({
+                                        ...editingTextAnswer,
+                                        [q.id]: false,
+                                      });
+                                      setOptionInputs({
+                                        ...optionInputs,
+                                        ["correct_" + q.id]: "",
+                                      });
+                                      loadMatchDetails(m.id);
+                                    } catch (err) {
+                                      console.error(err);
+                                    }
+                                  }}
+                                >
+                                  {q.correctTextAnswer
+                                    ? "💾 Update"
+                                    : "✓ Set Answer"}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <div
+                                  className="px-4 py-2.5 rounded-xl text-green-400 font-semibold text-sm"
+                                  style={{
+                                    background: "rgba(0,200,80,0.08)",
+                                    border: "1px solid rgba(0,200,80,0.25)",
+                                  }}
+                                >
+                                  ✅ {q.correctTextAnswer}
+                                </div>
+                                <button
+                                  className="admin-btn"
+                                  style={{
+                                    background: "rgba(255,215,0,0.1)",
+                                    border: "1px solid rgba(255,215,0,0.25)",
+                                    color: "#ffd700",
+                                  }}
+                                  onClick={() =>
+                                    setEditingTextAnswer({
+                                      ...editingTextAnswer,
+                                      [q.id]: true,
+                                    })
+                                  }
+                                >
+                                  ✏ Update
+                                </button>
                               </div>
                             )}
                           </div>
-                        </div>
-                      )
-                    ),
-                  )}
+                        )}
+                      </div>
+                    </div>
+                  ))}
 
                 {/* Add Question inline */}
                 {expandedMatchId === m.id && (

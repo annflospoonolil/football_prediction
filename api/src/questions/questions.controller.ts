@@ -28,6 +28,8 @@ export class QuestionsController {
   remove(@Param('id') id: string) {
     return this.questionsService.remove(id);
   }
+  @UseGuards(JwtAuthGuard)
+  @Roles('ADMIN')
   @Patch(':id/correct-text')
   setCorrectText(@Param('id') id: string, @Body() body: { answer: string }) {
     return this.questionsService.setCorrectText(id, body.answer);

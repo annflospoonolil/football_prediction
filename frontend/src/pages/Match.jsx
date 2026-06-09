@@ -3,7 +3,6 @@ import { api } from "../services/api";
 import Select from "react-select";
 
 export default function Match({ matchId, goBack }) {
-  console.log("MATCH ID RECEIVED:", matchId);
   const [match, setMatch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,14 +23,12 @@ export default function Match({ matchId, goBack }) {
         setError(null);
         const matchRes = await api.get(`/matches/${matchId}`);
         setMatch(matchRes.data);
-        console.log("MATCH DATA:", matchRes.data);
         const answerRes = await api.get(`/answers/match/${matchId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (answerRes.data.length === matchRes.data.questions.length) {
           setSubmitted(true);
         }
-        console.log("USER ANSWERS:", answerRes.data);
         const optionMap = {};
         const textMap = {};
         const multiMap = {};

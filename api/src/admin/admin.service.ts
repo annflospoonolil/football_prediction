@@ -74,7 +74,7 @@ export class AdminService {
   completeMatch(matchId: string) {
     return this.prisma.match.update({
       where: { id: matchId },
-      data: { isCompleted: true },
+      data: { isCompleted: true, isLocked: true },
     });
   }
   async deleteMatch(matchId: string) {

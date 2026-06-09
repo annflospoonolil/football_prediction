@@ -5,6 +5,7 @@ import MatchCard from "../components/MatchCard";
 // Added an onLogout prop to handle auth tear-down externally if needed
 export default function Home({ onSelectMatch, onLogout }) {
   const [matches, setMatches] = useState([]);
+
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -369,17 +370,6 @@ export default function Home({ onSelectMatch, onLogout }) {
       {/* ═══════════════════════════════════════════════════════════════
           ALL UI BELOW IS IDENTICAL TO THE ORIGINAL — nothing changed
       ═══════════════════════════════════════════════════════════════ */}
-
-      {/* ── Logout Button Navigation Layer ── */}
-      <nav className="relative z-20 max-w-7xl mx-auto px-6 pt-6 flex justify-end">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase text-red-400 border border-red-500/20 transition-all duration-300 hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-300 backdrop-blur-md"
-          style={{ fontFamily: "'Rajdhani', sans-serif" }}
-        >
-          <span>🚪</span> Logout
-        </button>
-      </nav>
 
       {/* ── Hero ── */}
       <header
