@@ -14,11 +14,11 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: ['http://localhost:5173', process.env.FRONTEND_URL],
     credentials: true,
   });
-
-  await app.listen(3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
 }
 
 bootstrap();
