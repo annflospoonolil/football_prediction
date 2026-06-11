@@ -4,46 +4,15 @@ import { CreateAnswerDto } from './dto/create-answer.dto';
 import { BadRequestException } from '@nestjs/common';
 
 // types/answer.types.ts
-
-export type GoalScorers = {
-  teamA: string[];
-  teamB: string[];
-};
-
-export type Score = {
-  teamA: number;
-  teamB: number;
-};
-
-export type SelectedOptions = {
-  score?: Score;
-  goalScorers?: GoalScorers;
-};
 @Injectable()
 export class AnswersService {
   constructor(private prisma: PrismaService) {}
-  private validateGoalScorers(score, goalScorers, match) {
-    const teamAPlayers = goalScorers?.teamA ?? [];
-    const teamBPlayers = goalScorers?.teamB ?? [];
-
-    if (teamAPlayers.length !== score.teamA) {
-      throw new BadRequestException(
-        `You must select ${score.teamA} scorers for ${match.teamA}`,
-      );
-    }
-
-    if (teamBPlayers.length !== score.teamB) {
-      throw new BadRequestException(
-        `You must select ${score.teamB} scorers for ${match.teamB}`,
-      );
-    }
-  }
   async getUserAnswers(userId: string, matchId: string) {
     return this.prisma.answer.findMany({
       where: {
-        userId,
+        userId: userId,
         question: {
-          matchId,
+          matchId: matchId, // 🚀 Filter by the match!
         },
       },
       include: {
@@ -63,22 +32,69 @@ export class AnswersService {
     }
 
     const matchStarted = new Date() >= new Date(question.match.kickoffAt);
-
     if (question.match.isLocked || matchStarted) {
       throw new ForbiddenException(
         'Match already started. Predictions are closed.',
       );
     }
+    const updateData: any = {};
 
-    const selectedOptions = (dto.selectedOptions ?? {}) as SelectedOptions;
-    const score = selectedOptions.score ?? { teamA: 0, teamB: 0 };
-    const goalScorers = selectedOptions.goalScorers ?? {};
-
-    // ⚽ VALIDATION ONLY FOR GOAL SCORERS QUESTION
-    if (question.template === 'GOAL_SCORERS') {
-      this.validateGoalScorers(score, goalScorers, question.match);
+    if (dto.optionId !== undefined) {
+      updateData.optionId = dto.optionId;
     }
+    if (dto.textAnswer !== undefined) {
+      updateData.textAnswer = dto.textAnswer;
+    }
+    if (
+      dto.selectedOptions !== undefined &&
+      Array.isArray(dto.selectedOptions)
+    ) {
+      updateData.selectedOptions = dto.selectedOptions;
+    }
+    const createData = {
+      userId,
+      questionId: dto.questionId,
+      optionId: dto.optionId ?? null,
+      textAnswer: dto.textAnswer ?? null,
+      selectedOptions: Array.isArray(dto.selectedOptions)
+        ? dto.selectedOptions
+        : [],
+    };
+    if (dto.optionId) {
+      const option = await this.prisma.option.findUnique({
+        where: { id: dto.optionId },
+      });
 
+      if (!option) {
+        throw new BadRequestException('Option not found');
+      }
+
+      if (option.questionId !== dto.questionId) {
+        throw new BadRequestException(
+          'Option does not belong to this question',
+        );
+      }
+    }
+    if (
+      dto.selectedOptions &&
+      Array.isArray(dto.selectedOptions) &&
+      dto.selectedOptions.length > 0
+    ) {
+      const options = await this.prisma.option.findMany({
+        where: {
+          id: {
+            in: dto.selectedOptions,
+          },
+        },
+      });
+      const invalid = options.some((o) => o.questionId !== dto.questionId);
+
+      if (invalid) {
+        throw new BadRequestException(
+          'Selected option does not belong to this question',
+        );
+      }
+    }
     return this.prisma.answer.upsert({
       where: {
         userId_questionId: {
@@ -86,99 +102,91 @@ export class AnswersService {
           questionId: dto.questionId,
         },
       },
-      create: {
-        userId,
-        questionId: dto.questionId,
-        optionId: dto.optionId ?? null,
-        textAnswer: dto.textAnswer ?? null,
-        selectedOptions: dto.selectedOptions ?? {},
-      },
-      update: {
-        optionId: dto.optionId ?? null,
-        textAnswer: dto.textAnswer ?? null,
-        selectedOptions: dto.selectedOptions ?? {},
-      },
+      create: createData,
+      update: updateData,
     });
   }
+
   private leaderboardCache: any = null;
   private cacheTime = 0;
   async getLeaderboard() {
-    if (this.leaderboardCache && Date.now() - this.cacheTime < 60000) {
-      return this.leaderboardCache;
-    }
+    // This is the array data you just shared!
     const answers = await this.prisma.answer.findMany({
       include: {
         question: {
-          include: {
-            options: true,
-          },
+          include: { options: true }, // Populates the options arrays
         },
-        option: true,
-        user: true,
+        user: true, // Populates the user details (fullName, email, etc.)
       },
     });
-    const scoreMap = {};
 
-    for (const ans of answers) {
+    const userScores: Record<string, { name: string; score: number }> = {};
+
+    answers.forEach((ans) => {
       const userId = ans.userId;
 
-      if (!scoreMap[userId]) {
-        scoreMap[userId] = {
-          userId,
-          name: ans.user.fullName,
+      // Initialize user tracker if it doesn't exist yet
+      if (!userScores[userId]) {
+        userScores[userId] = {
+          name: ans.user?.fullName || 'Anonymous',
           score: 0,
         };
       }
 
-      if (
-        ans.question.type === 'OPTION' &&
-        ans.optionId &&
-        ans.option?.isCorrect
-      ) {
-        scoreMap[userId].score += 1;
+      // ─── TYPE 1: SCORE PREDICTIONS (Exact String Matching) ───
+      if (ans.question.type === 'SCORE') {
+        if (
+          ans.textAnswer &&
+          ans.question.correctTextAnswer &&
+          ans.textAnswer.trim() === ans.question.correctTextAnswer.trim()
+        ) {
+          userScores[userId].score += 3; // Award 15 points for exact final score
+        }
       }
 
-      // TEXT
-      if (
-        ans.question.type === 'TEXT' &&
-        ans.textAnswer &&
-        ans.question.correctTextAnswer &&
-        ans.textAnswer.trim().toLowerCase() ===
-          ans.question.correctTextAnswer.trim().toLowerCase()
+      // ─── TYPE 2: MULTI_SELECT PREDICTIONS (Goalscorers Array Math) ───
+      else if (
+        ans.question.type === 'MULTI_SELECT' &&
+        Array.isArray(ans.selectedOptions)
       ) {
-        scoreMap[userId].score += 1;
-      }
-      if (
-        ans.question.type === 'SCORE' &&
-        ans.textAnswer?.trim().toLowerCase() ===
-          ans.question.correctTextAnswer?.trim().toLowerCase()
-      ) {
-        scoreMap[userId].score += 3;
-      }
+        const uniqueSelections = [...new Set(ans.selectedOptions)];
 
-      // MULTI_SELECT
-      const selectedOptions = Array.isArray(ans.selectedOptions)
-        ? (ans.selectedOptions as string[])
-        : [];
-      if (ans.question.type === 'MULTI_SELECT' && selectedOptions?.length) {
-        const correctOptions = ans.question.options
+        const adminCorrectOptions = ans.question.options
           .filter((o) => o.isCorrect)
           .map((o) => o.id);
 
-        const matched = selectedOptions.filter((id) =>
-          correctOptions.includes(id),
-        ).length;
+        uniqueSelections.forEach((optionId) => {
+          const optionInDb = ans.question.options.find(
+            (o) => o.id === optionId,
+          );
 
-        // Partial scoring
-        scoreMap[userId].score += matched;
+          if (optionInDb && optionInDb.isCorrect) {
+            userScores[userId].score += 1;
+          }
+        });
       }
-    }
-    const leaderboard = Object.values(scoreMap).sort(
-      (a: any, b: any) => b.score - a.score,
-    );
-    this.leaderboardCache = leaderboard;
-    this.cacheTime = Date.now();
 
-    return leaderboard;
+      // ─── TYPE 3: SINGLE OPTION PREDICTIONS (MOTM, Possession, etc.) ───
+      else if (ans.question.type === 'OPTION' && ans.optionId) {
+        const selectedOption = ans.question.options.find(
+          (o) => o.id === ans.optionId,
+        );
+        if (selectedOption && selectedOption.isCorrect) {
+          userScores[userId].score += 1;
+          // Award 10 points for correct option pick
+        }
+      }
+    });
+
+    // Convert map tracker object back into a sorted array for your React component
+    const sortedLeaderboard = Object.keys(userScores)
+      .map((id) => ({
+        userId: id,
+        name: userScores[id].name,
+        score: userScores[id].score,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    return sortedLeaderboard;
   }
 }

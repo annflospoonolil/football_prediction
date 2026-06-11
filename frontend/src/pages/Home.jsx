@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import MatchCard from "../components/MatchCard";
+import Kalavedhibg from "../assets/Kalavedhi Desktop Event.png";
 
 // Added an onLogout prop to handle auth tear-down externally if needed
 export default function Home({ onSelectMatch, onLogout }) {
@@ -249,12 +250,7 @@ export default function Home({ onSelectMatch, onLogout }) {
 
       {/* Layer 1 — The FIFA Fiesta '26 banner image */}
       <div className="bg-image-layer">
-        <img
-          src="/src/assets/Kalavedhi Desktop Event.png"
-          alt=""
-          aria-hidden="true"
-          draggable="false"
-        />
+        <img src={Kalavedhibg} alt="" aria-hidden="true" draggable="false" />
       </div>
 
       {/* Layer 2 — Primary darkening gradient (bottom-fade) */}

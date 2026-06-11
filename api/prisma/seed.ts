@@ -1649,7 +1649,6 @@ async function main() {
     // =========================
     // 🔥 OPTION 1: CLEAN RESET (PUT THIS FIRST)
     // =========================
-    await prisma.user.deleteMany();
     await prisma.option.deleteMany();
     await prisma.question.deleteMany();
     await prisma.match.deleteMany();
@@ -1737,24 +1736,38 @@ async function main() {
         });
 
         if (options?.length) {
+          const mappedOptions = options.map((opt: any) => ({
+            text: opt.text,
+            isCorrect: opt.isCorrect || false,
+            questionId: question.id,
+          }));
+          if (t.type === 'MULTI_SELECT') {
+            mappedOptions.push(
+              {
+                text: 'Own Goal (Conceded by Team A)',
+                isCorrect: false,
+                questionId: question.id,
+              },
+              {
+                text: 'Own Goal (Conceded by Team B)',
+                isCorrect: false,
+                questionId: question.id,
+              },
+            );
+          }
           await prisma.option.createMany({
-            data: options.map((opt: any) => ({
-              text: opt.text,
-              isCorrect: opt.isCorrect || false,
-              questionId: question.id,
-            })),
+            data: mappedOptions,
           });
         }
       }
-    }
 
-    console.log('🔥 Seed completed successfully');
-  } catch (err) {
-    console.error('❌ Seed failed:', err);
-  } finally {
-    await prisma.$disconnect();
+      console.log('🔥 Seed completed successfully');
+    }
+  } catch (error) {
+    console.error('❌ Error seeding data:', error);
   }
 }
+
 main()
   .then(async () => {
     await prisma.$disconnect();

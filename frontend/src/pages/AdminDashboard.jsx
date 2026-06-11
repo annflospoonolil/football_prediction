@@ -1,6 +1,298 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 
+const AdminMultiSelectScorers = ({ q, m, api, loadMatchDetails }) => {
+  const totalOptions = q.options || [];
+  const usesTeamId = totalOptions[0]?.teamId !== undefined;
+  const teamAIdToken = usesTeamId ? totalOptions[0]?.teamId : null;
+
+  // Helper to determine if an option belongs to Team A
+  const isPlayerFromTeamA = (opt, index) => {
+    if (opt.text?.includes("Conceded by Team A")) return true;
+    if (opt.text?.includes("Conceded by Team B")) return false;
+    return usesTeamId ? opt.teamId === teamAIdToken : index < 26;
+  };
+  useEffect(() => {
+    if (q.options) {
+      const savedIds = q.options.filter((o) => o.isCorrect).map((o) => o.id);
+      setLocalScorers(savedIds);
+    }
+  }, [q.options]);
+  // Synchronize state with real database option items marked as correct
+  const [localScorers, setLocalScorers] = useState(() => {
+    const initial = [];
+    totalOptions.forEach((o) => {
+      if (o.isCorrect) initial.push(o.id);
+    });
+    return initial;
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Split options directly from data pool into columns
+  const teamAOptions = [];
+  const teamBOptions = [];
+  totalOptions.forEach((opt, idx) => {
+    if (isPlayerFromTeamA(opt, idx)) {
+      teamAOptions.push({ opt, globalIndex: idx });
+    } else {
+      teamBOptions.push({ opt, globalIndex: idx });
+    }
+  });
+
+  // Scoreboard counters (Football logic: Team B conceding an own goal adds to Team A's tally)
+  const countA = localScorers.filter((id) => {
+    const i = totalOptions.findIndex((o) => o.id === id);
+    if (i === -1) return false;
+
+    const opt = totalOptions[i];
+    if (opt.text?.includes("Conceded by Team B")) return true;
+    if (opt.text?.includes("Conceded by Team A")) return false;
+
+    return isPlayerFromTeamA(opt, i);
+  }).length;
+
+  const countB = localScorers.filter((id) => {
+    const i = totalOptions.findIndex((o) => o.id === id);
+    if (i === -1) return false;
+
+    const opt = totalOptions[i];
+    if (opt.text?.includes("Conceded by Team A")) return true;
+    if (opt.text?.includes("Conceded by Team B")) return false;
+
+    return !isPlayerFromTeamA(opt, i);
+  }).length;
+
+  // MASTER SAVE LOGIC
+  const handleAdminSave = async () => {
+    setIsSaving(true);
+    try {
+      // Step A: Unmark any options no longer in our local array
+      const itemsToUnmark = totalOptions.filter(
+        (o) => o.isCorrect && !localScorers.includes(o.id),
+      );
+      for (const item of itemsToUnmark) {
+        await api.patch(
+          `/options/${item.id}/correct`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+      }
+
+      // Step B: Dynamically scale brackets for multiples (braces, duplicate own goals)
+      const uniqueSelections = [...new Set(localScorers)];
+
+      for (const selectionId of uniqueSelections) {
+        const targetCount = localScorers.filter(
+          (id) => id === selectionId,
+        ).length;
+
+        const found = totalOptions.find((o) => o.id === selectionId);
+        if (!found) continue;
+        const optionText = found.text;
+
+        // Collect existing items matching this string identity
+        let existingOptionsWithText = totalOptions.filter(
+          (o) => o.text === optionText,
+        );
+
+        // Provision missing bracket slots dynamically if there's a multi-goal performance
+        while (existingOptionsWithText.length < targetCount) {
+          const res = await api.post(
+            "/options",
+            { questionId: q.id, text: optionText },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            },
+          );
+          existingOptionsWithText.push(
+            res.data || { text: optionText, isCorrect: false },
+          );
+        }
+
+        // Step C: Flush precise evaluation states to database rows
+        for (let i = 0; i < existingOptionsWithText.length; i++) {
+          const currentItem = existingOptionsWithText[i];
+          const shouldBeCorrect = i < targetCount;
+
+          if (currentItem.id && currentItem.isCorrect !== shouldBeCorrect) {
+            await api.patch(
+              `/options/${currentItem.id}/correct`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+              },
+            );
+          }
+        }
+      }
+
+      alert("Official match answers successfully saved!");
+      loadMatchDetails(m.id);
+    } catch (err) {
+      console.error("Error saving admin answers:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const renderAdminPlayerButton = (opt, index) => {
+    const playerGoalCount = localScorers.filter((id) => id === opt.id).length;
+    const isChecked = playerGoalCount > 0;
+
+    const handleIncrement = () => {
+      setLocalScorers((prev) => [...prev, opt.id]);
+    };
+
+    const handleDecrement = () => {
+      if (playerGoalCount === 0) return;
+      const indexToRemove = localScorers.indexOf(opt.id);
+      const updated = [...localScorers];
+      if (indexToRemove !== -1) updated.splice(indexToRemove, 1);
+      setLocalScorers(updated);
+    };
+
+    return (
+      <div
+        key={opt.id}
+        className="player-row block w-full text-left px-3 py-2 rounded-xl border flex items-center justify-between transition-all"
+        style={{
+          background: isChecked
+            ? "rgba(0,200,80,0.06)"
+            : "rgba(255,255,255,0.03)",
+          borderColor: isChecked
+            ? "rgba(0,200,80,0.3)"
+            : "rgba(255,255,255,0.07)",
+        }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className="text-xs font-semibold truncate"
+            style={{ color: isChecked ? "#e2e8f0" : "#94a3b8" }}
+          >
+            {opt.text}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          {isChecked && (
+            <button
+              type="button"
+              onClick={handleDecrement}
+              className="w-6 h-6 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 flex items-center justify-center text-xs font-black text-red-400 cursor-pointer"
+            >
+              —
+            </button>
+          )}
+
+          {isChecked && (
+            <span className="text-xs font-black min-w-[14px] text-center text-green-400">
+              {playerGoalCount}
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleIncrement}
+            className="w-6 h-6 rounded-lg bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 flex items-center justify-center text-xs font-black text-green-400 cursor-pointer"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4 border-t border-gray-800 pt-4 mt-2">
+      {/* Admin Control Banner */}
+      <div
+        className="flex flex-wrap gap-3 text-xs font-black tracking-wide py-2 px-3 rounded-xl justify-between items-center"
+        style={{
+          background: "rgba(0,0,0,0.2)",
+          border: "1px solid rgba(255,255,255,0.05)",
+        }}
+      >
+        <span className="text-gray-400 uppercase tracking-wider text-[10px]">
+          Match Score Center (Admin Mode)
+        </span>
+        <div className="flex gap-4">
+          <span className="text-green-400">
+            🟢 {m.teamA?.name || "Team A"}: {countA} goals
+          </span>
+          <span className="text-blue-400">
+            🔵 {m.teamB?.name || "Team B"}: {countB} goals
+          </span>
+        </div>
+      </div>
+
+      {/* Two Column Layout Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Team A Columns */}
+        <div
+          className="rounded-2xl p-3"
+          style={{
+            background: "rgba(0,200,80,0.04)",
+            border: "1px solid rgba(0,200,80,0.12)",
+          }}
+        >
+          <div className="mb-2.5 px-1 font-black uppercase tracking-widest text-green-400 text-[11px]">
+            {m.teamA?.name || "Team A"}
+          </div>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+            {teamAOptions.map(({ opt, globalIndex }) =>
+              renderAdminPlayerButton(opt, globalIndex),
+            )}
+          </div>
+        </div>
+
+        {/* Team B Columns */}
+        <div
+          className="rounded-2xl p-3"
+          style={{
+            background: "rgba(0,150,255,0.04)",
+            border: "1px solid rgba(0,150,255,0.12)",
+          }}
+        >
+          <div className="mb-2.5 px-1 font-black uppercase tracking-widest text-blue-400 text-[11px]">
+            {m.teamB?.name || "Team B"}
+          </div>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+            {teamBOptions.map(({ opt, globalIndex }) =>
+              renderAdminPlayerButton(opt, globalIndex),
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button Action Trigger */}
+      <button
+        type="button"
+        disabled={isSaving}
+        onClick={handleAdminSave}
+        className="w-full py-2.5 rounded-xl font-black text-sm tracking-wide transition-all uppercase"
+        style={{
+          background: "linear-gradient(135deg, #16a34a, #15803d)",
+          color: "#fff",
+          boxShadow: "0 4px 12px rgba(22,163,74,0.2)",
+          opacity: isSaving ? 0.6 : 1,
+          cursor: isSaving ? "not-allowed" : "pointer",
+        }}
+      >
+        {isSaving ? "Syncing Database..." : "💾 Save Official Match Results"}
+      </button>
+    </div>
+  );
+};
+
 export default function AdminDashboard() {
   const [matches, setMatches] = useState([]);
   const [teamA, setTeamA] = useState("");
@@ -809,7 +1101,7 @@ export default function AdminDashboard() {
                         )}
 
                         {/* OPTION / MULTI_SELECT */}
-                        {(q.type === "OPTION" || q.type === "MULTI_SELECT") && (
+                        {q.type === "OPTION" && (
                           <>
                             <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">
                               Options
@@ -852,10 +1144,7 @@ export default function AdminDashboard() {
                                       }}
                                       onClick={async () => {
                                         try {
-                                          const ep =
-                                            q.type === "MULTI_SELECT"
-                                              ? `/options/${o.id}/toggle-correct`
-                                              : `/options/${o.id}/correct`;
+                                          const ep = `/options/${o.id}/correct`;
                                           await api.patch(
                                             ep,
                                             {},
@@ -961,6 +1250,14 @@ export default function AdminDashboard() {
                               </button>
                             </div>
                           </>
+                        )}
+                        {q.type === "MULTI_SELECT" && (
+                          <AdminMultiSelectScorers
+                            q={q}
+                            m={m}
+                            api={api}
+                            loadMatchDetails={loadMatchDetails}
+                          />
                         )}
 
                         {/* TEXT */}

@@ -724,96 +724,126 @@ export default function Match({ matchId, goBack }) {
                       const teamAIdToken = usesTeamId
                         ? totalOptions[0]?.teamId
                         : null;
-                      const isPlayerFromTeamA = (opt, index) =>
-                        usesTeamId ? opt.teamId === teamAIdToken : index < 26;
-                      const teamAOptions = [],
-                        teamBOptions = [];
+
+                      // Helper to determine if an option belongs to Team A
+                      const isPlayerFromTeamA = (opt, index) => {
+                        if (opt.text?.includes("Conceded by Team A"))
+                          return true;
+                        if (opt.text?.includes("Conceded by Team B"))
+                          return false;
+                        return usesTeamId
+                          ? opt.teamId === teamAIdToken
+                          : index < 26;
+                      };
+
+                      // Split options into respective columns
+                      const teamAOptions = [];
+                      const teamBOptions = [];
                       totalOptions.forEach((opt, idx) => {
-                        (isPlayerFromTeamA(opt, idx)
-                          ? teamAOptions
-                          : teamBOptions
-                        ).push({ opt, globalIndex: idx });
+                        if (isPlayerFromTeamA(opt, idx)) {
+                          teamAOptions.push({ opt, globalIndex: idx });
+                        } else {
+                          teamBOptions.push({ opt, globalIndex: idx });
+                        }
                       });
+
+                      // Score Banner Computations (Football Logic: Own goals count for the opposing team)
                       const countA = selected.filter((id) => {
                         const i = totalOptions.findIndex((o) => o.id === id);
-                        return (
-                          i !== -1 && isPlayerFromTeamA(totalOptions[i], i)
-                        );
-                      }).length;
-                      const countB = selected.filter((id) => {
-                        const i = totalOptions.findIndex((o) => o.id === id);
-                        return (
-                          i !== -1 && !isPlayerFromTeamA(totalOptions[i], i)
-                        );
+                        if (i === -1) return false;
+
+                        const opt = totalOptions[i];
+                        if (opt.text?.includes("Conceded by Team B"))
+                          return true;
+                        if (opt.text?.includes("Conceded by Team A"))
+                          return false;
+
+                        return isPlayerFromTeamA(opt, i);
                       }).length;
 
+                      const countB = selected.filter((id) => {
+                        const i = totalOptions.findIndex((o) => o.id === id);
+                        if (i === -1) return false;
+
+                        const opt = totalOptions[i];
+                        if (opt.text?.includes("Conceded by Team A"))
+                          return true;
+                        if (opt.text?.includes("Conceded by Team B"))
+                          return false;
+
+                        return !isPlayerFromTeamA(opt, i);
+                      }).length;
+
+                      // Sub-render method for individual counter rows
                       const renderPlayerButton = (opt, index) => {
+                        const playerGoalCount = selected.filter(
+                          (id) => id === opt.id,
+                        ).length;
                         const isChecked = selected.includes(opt.id);
                         const isTeamA = isPlayerFromTeamA(opt, index);
-                        const reachedLimit =
-                          (isTeamA && countA >= limits.teamA && !isChecked) ||
-                          (!isTeamA && countB >= limits.teamB && !isChecked);
-                        return (
-                          <button
-                            key={opt.id}
-                            disabled={
-                              match.isLocked || (reachedLimit && !isChecked)
+                        let reachedLimit = false;
+                        if (opt.text?.includes("Conceded by Team B")) {
+                          // If Team B concedes an own goal, it goes to Team A's scoreboard tracker.
+                          // Therefore, it should ONLY lock if TEAM A has reached their limit!
+                          reachedLimit = countA >= limits.teamA;
+                        } else if (opt.text?.includes("Conceded by Team A")) {
+                          // If Team A concedes an own goal, it goes to Team B's scoreboard tracker.
+                          // Therefore, it should ONLY lock if TEAM B has reached their limit!
+                          reachedLimit = countB >= limits.teamB;
+                        } else {
+                          // Check limits based on adjusted scoreboard counts
+                          reachedLimit =
+                            (isTeamA && countA >= limits.teamA) ||
+                            (!isTeamA && countB >= limits.teamB);
+                        }
+
+                        const handleIncrement = () => {
+                          if (match.isLocked || reachedLimit) return;
+
+                          setSelectedMultiOptions((prev) => ({
+                            ...prev,
+                            [q.id]: [...selected, opt.id],
+                          }));
+                        };
+
+                        const handleDecrement = () => {
+                          if (match.isLocked || playerGoalCount === 0) return;
+
+                          setSelectedMultiOptions((prev) => {
+                            const indexToRemove = selected.indexOf(opt.id);
+                            const updated = [...selected];
+                            if (indexToRemove !== -1) {
+                              updated.splice(indexToRemove, 1);
                             }
-                            onClick={() => {
-                              if (match.isLocked) return;
-                              let updated;
-                              if (isChecked) {
-                                updated = selected.filter(
-                                  (id) => id !== opt.id,
-                                );
-                              } else {
-                                if (reachedLimit) return;
-                                updated = [...selected, opt.id];
-                              }
-                              setSelectedMultiOptions((prev) => ({
-                                ...prev,
-                                [q.id]: updated,
-                              }));
-                            }}
-                            className="player-btn block w-full text-left px-3 py-2.5 rounded-xl border"
+                            return {
+                              ...prev,
+                              [q.id]: updated,
+                            };
+                          });
+                        };
+
+                        return (
+                          <div
+                            key={opt.id}
+                            className="player-row block w-full text-left px-3 py-2 rounded-xl border flex items-center justify-between transition-all"
                             style={{
                               background: isChecked
-                                ? "rgba(0,200,80,0.1)"
+                                ? "rgba(0,200,80,0.06)"
                                 : reachedLimit
                                   ? "rgba(255,255,255,0.01)"
                                   : "rgba(255,255,255,0.03)",
                               borderColor: isChecked
-                                ? "rgba(0,200,80,0.4)"
+                                ? "rgba(0,200,80,0.3)"
                                 : reachedLimit
                                   ? "rgba(255,255,255,0.03)"
                                   : "rgba(255,255,255,0.07)",
-                              cursor:
-                                reachedLimit && !isChecked
-                                  ? "not-allowed"
-                                  : "pointer",
-                              opacity: reachedLimit && !isChecked ? 0.3 : 1,
+                              opacity: reachedLimit && !isChecked ? 0.4 : 1,
                             }}
                           >
-                            <div className="flex items-center gap-2.5">
-                              <div
-                                className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border"
-                                style={{
-                                  borderColor: isChecked
-                                    ? "#00c850"
-                                    : "rgba(255,255,255,0.2)",
-                                  background: isChecked
-                                    ? "#00c850"
-                                    : "transparent",
-                                }}
-                              >
-                                {isChecked && (
-                                  <span className="text-black text-[9px] font-black">
-                                    ✓
-                                  </span>
-                                )}
-                              </div>
+                            {/* Left Side: Details */}
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <span
-                                className="text-xs font-semibold"
+                                className="text-xs font-semibold truncate"
                                 style={{
                                   color: isChecked
                                     ? "#e2e8f0"
@@ -824,24 +854,49 @@ export default function Match({ matchId, goBack }) {
                               >
                                 {opt.text}
                               </span>
-                              {isChecked && (
-                                <span className="ml-auto text-green-400 text-[9px] font-black uppercase tracking-wider">
-                                  Picked
-                                </span>
-                              )}
-                              {reachedLimit && !isChecked && (
-                                <span className="ml-auto text-gray-600 text-[9px] italic">
-                                  Maxed
-                                </span>
-                              )}
                             </div>
-                          </button>
+
+                            {/* Right Side: Step Mechanics */}
+                            <div className="flex items-center gap-2.5 clean-counter-ui">
+                              {isChecked && (
+                                <button
+                                  type="button"
+                                  disabled={match.isLocked}
+                                  onClick={handleDecrement}
+                                  className="w-6 h-6 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 flex items-center justify-center text-xs font-black text-red-400 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                >
+                                  —
+                                </button>
+                              )}
+
+                              {isChecked && (
+                                <span className="text-xs font-black min-w-[14px] text-center text-green-400">
+                                  {playerGoalCount}
+                                </span>
+                              )}
+
+                              <button
+                                type="button"
+                                disabled={
+                                  match.isLocked || (reachedLimit && !isChecked)
+                                }
+                                onClick={handleIncrement}
+                                className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black transition-colors ${
+                                  reachedLimit && !isChecked
+                                    ? "bg-gray-800 border border-gray-700 text-gray-600 cursor-not-allowed"
+                                    : "bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 text-green-400 cursor-pointer"
+                                }`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
                         );
                       };
 
                       return (
                         <div className="space-y-4">
-                          {/* Tracker */}
+                          {/* Banner Scoreboard Tracker */}
                           <div
                             className="flex flex-wrap gap-3 text-xs font-black tracking-wide py-2 px-3 rounded-xl"
                             style={{
@@ -856,7 +911,8 @@ export default function Match({ matchId, goBack }) {
                                   : "text-gray-500"
                               }
                             >
-                              🟢 {match.teamA.name}: {countA}/{limits.teamA}
+                              🟢 {match.teamA.name}: {countA}/{limits.teamA}{" "}
+                              goals
                             </span>
                             <span
                               className={
@@ -865,11 +921,14 @@ export default function Match({ matchId, goBack }) {
                                   : "text-gray-500"
                               }
                             >
-                              🔵 {match.teamB.name}: {countB}/{limits.teamB}
+                              🔵 {match.teamB.name}: {countB}/{limits.teamB}{" "}
+                              goals
                             </span>
                           </div>
-                          {/* Two columns */}
+
+                          {/* Column Splits */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Team A */}
                             <div
                               className="rounded-2xl p-3"
                               style={{
@@ -896,11 +955,13 @@ export default function Match({ matchId, goBack }) {
                                 )}
                                 {teamAOptions.length === 0 && (
                                   <p className="text-xs text-gray-600 text-center py-4 italic">
-                                    No players
+                                    No players available
                                   </p>
                                 )}
                               </div>
                             </div>
+
+                            {/* Team B */}
                             <div
                               className="rounded-2xl p-3"
                               style={{
@@ -927,7 +988,7 @@ export default function Match({ matchId, goBack }) {
                                 )}
                                 {teamBOptions.length === 0 && (
                                   <p className="text-xs text-gray-600 text-center py-4 italic">
-                                    No players
+                                    No players available
                                   </p>
                                 )}
                               </div>
@@ -936,7 +997,6 @@ export default function Match({ matchId, goBack }) {
                         </div>
                       );
                     })()}
-
                   {/* ── TEXT TYPE ── */}
                   {q.type === "TEXT" && (
                     <input
