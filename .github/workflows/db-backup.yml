@@ -10,12 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
       - name: Create backup
         run: |
-          pg_dump "${{ secrets.DATABASE_URL }}" > backup.sql
+          docker run --rm \
+          -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+          postgres:18 \
+          bash -c 'pg_dump "$DATABASE_URL"' > backup.sql
+
           gzip backup.sql
 
       - name: Push backup to backup repo
@@ -31,4 +32,5 @@ jobs:
 
           git add .
           git commit -m "Backup $(date +%F)" || echo "No changes"
+
           git push
