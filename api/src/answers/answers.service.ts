@@ -140,7 +140,7 @@ export class AnswersService {
           ans.question.correctTextAnswer &&
           ans.textAnswer.trim() === ans.question.correctTextAnswer.trim()
         ) {
-          userScores[userId].score += 3; // Award 15 points for exact final score
+          userScores[userId].score += 1; // Award 15 points for exact final score
         }
       }
 
