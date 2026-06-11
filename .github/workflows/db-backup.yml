@@ -1,0 +1,34 @@
+name: Daily Database Backup
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create backup
+        run: |
+          pg_dump "${{ secrets.DATABASE_URL }}" > backup.sql
+          gzip backup.sql
+
+      - name: Push backup to backup repo
+        run: |
+          git clone https://x-access-token:${{ secrets.BACKUP_TOKEN }}@github.com/annflospoonolil/football-db-backups.git
+
+          cp backup.sql.gz football-db-backups/backup-$(date +%F).sql.gz
+
+          cd football-db-backups
+
+          git config user.name "Backup Bot"
+          git config user.email "backup@github.com"
+
+          git add .
+          git commit -m "Backup $(date +%F)" || echo "No changes"
+          git push
