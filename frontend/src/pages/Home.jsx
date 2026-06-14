@@ -30,6 +30,14 @@ export default function Home({ onSelectMatch, onLogout }) {
       window.location.reload();
     }
   };
+  // Sort matches: Open ones (false) stay on top, locked ones (true) go to the bottom
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (a.isLocked && !b.isLocked) return 1; // Move 'a' down if it's locked
+    if (!a.isLocked && b.isLocked) return -1; // Keep 'a' up if it's open
+
+    // Optional: If both are open or both are locked, sort them chronologically by kickoff time
+    return new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
+  });
 
   return (
     <div
@@ -471,7 +479,7 @@ export default function Home({ onSelectMatch, onLogout }) {
       {/* ── Cards Grid ── */}
       <main className="relative z-10 max-w-2xl mx-auto px-4 pb-20">
         <div className="flex flex-col gap-5">
-          {matches.map((m, idx) => (
+          {sortedMatches.map((m, idx) => (
             <div
               key={m.id}
               style={{
