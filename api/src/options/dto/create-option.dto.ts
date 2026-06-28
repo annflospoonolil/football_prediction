@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateOptionDto {
   @IsString()
@@ -8,4 +8,12 @@ export class CreateOptionDto {
   @IsString()
   @IsNotEmpty()
   text!: string;
+
+  @IsString()
+  @IsOptional()
+  teamId?: string;
+
+  @IsString()
+  @IsOptional()
+  teamSide?: string;
 }

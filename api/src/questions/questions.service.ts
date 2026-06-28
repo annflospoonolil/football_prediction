@@ -40,6 +40,8 @@ export class QuestionsService {
           data: options.map((opt) => ({
             text: opt.text,
             isCorrect: opt.isCorrect || false,
+            teamId: opt.teamId,
+            teamSide: opt.teamSide,
             questionId: question.id,
           })),
         });

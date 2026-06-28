@@ -84,6 +84,8 @@ model Question {
 model Option {
   id          String    @id @default(uuid())
   text        String
+  teamId      String?
+  teamSide    String?
 
   questionId  String
   question    Question  @relation(fields: [questionId], references: [id],onDelete: Cascade)

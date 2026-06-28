@@ -21,16 +21,18 @@ export class MatchesService {
 
     const teamA = await this.prisma.team.findUnique({
       where: { id: dto.teamAId },
+      include: { players: true },
     });
 
     const teamB = await this.prisma.team.findUnique({
       where: { id: dto.teamBId },
+      include: { players: true },
     });
 
     await this.questionsService.generateForMatch(
       match.id,
-      { name: teamA?.name || 'Team A' },
-      { name: teamB?.name || 'Team B' },
+      teamA || { id: dto.teamAId, name: 'Team A', players: [] },
+      teamB || { id: dto.teamBId, name: 'Team B', players: [] },
     );
 
     return match;

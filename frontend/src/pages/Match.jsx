@@ -720,20 +720,20 @@ export default function Match({ matchId, goBack }) {
                     (() => {
                       const selected = selectedMultiOptions[q.id] || [];
                       const totalOptions = q.options || [];
-                      const usesTeamId = totalOptions[0]?.teamId !== undefined;
-                      const teamAIdToken = usesTeamId
-                        ? totalOptions[0]?.teamId
-                        : null;
 
-                      // Helper to determine if an option belongs to Team A
                       const isPlayerFromTeamA = (opt, index) => {
+                        if (opt.teamSide === "A") return true;
+                        if (opt.teamSide === "B") return false;
+                        if (opt.teamId && match.teamAId)
+                          return opt.teamId === match.teamAId;
+                        if (opt.teamId && match.teamBId)
+                          return opt.teamId !== match.teamBId;
                         if (opt.text?.includes("Conceded by Team A"))
                           return true;
                         if (opt.text?.includes("Conceded by Team B"))
                           return false;
-                        return usesTeamId
-                          ? opt.teamId === teamAIdToken
-                          : index < 26;
+
+                        return index < 26;
                       };
 
                       // Split options into respective columns

@@ -3,14 +3,16 @@ import { api } from "../services/api";
 
 const AdminMultiSelectScorers = ({ q, m, api, loadMatchDetails }) => {
   const totalOptions = q.options || [];
-  const usesTeamId = totalOptions[0]?.teamId !== undefined;
-  const teamAIdToken = usesTeamId ? totalOptions[0]?.teamId : null;
 
-  // Helper to determine if an option belongs to Team A
   const isPlayerFromTeamA = (opt, index) => {
+    if (opt.teamSide === "A") return true;
+    if (opt.teamSide === "B") return false;
+    if (opt.teamId && m.teamAId) return opt.teamId === m.teamAId;
+    if (opt.teamId && m.teamBId) return opt.teamId !== m.teamBId;
     if (opt.text?.includes("Conceded by Team A")) return true;
     if (opt.text?.includes("Conceded by Team B")) return false;
-    return usesTeamId ? opt.teamId === teamAIdToken : index < 26;
+
+    return index < 26;
   };
   useEffect(() => {
     if (q.options) {
@@ -104,7 +106,12 @@ const AdminMultiSelectScorers = ({ q, m, api, loadMatchDetails }) => {
         while (existingOptionsWithText.length < targetCount) {
           const res = await api.post(
             "/options",
-            { questionId: q.id, text: optionText },
+            {
+              questionId: q.id,
+              text: optionText,
+              teamId: found.teamId,
+              teamSide: found.teamSide,
+            },
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,

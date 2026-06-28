@@ -1739,22 +1739,10 @@ async function main() {
           const mappedOptions = options.map((opt: any) => ({
             text: opt.text,
             isCorrect: opt.isCorrect || false,
+            teamId: opt.teamId,
+            teamSide: opt.teamSide,
             questionId: question.id,
           }));
-          if (t.type === 'MULTI_SELECT') {
-            mappedOptions.push(
-              {
-                text: 'Own Goal (Conceded by Team A)',
-                isCorrect: false,
-                questionId: question.id,
-              },
-              {
-                text: 'Own Goal (Conceded by Team B)',
-                isCorrect: false,
-                questionId: question.id,
-              },
-            );
-          }
           await prisma.option.createMany({
             data: mappedOptions,
           });

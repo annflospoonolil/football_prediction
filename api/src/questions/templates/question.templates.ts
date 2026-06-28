@@ -20,15 +20,25 @@ export const QUESTION_TEMPLATES = {
     type: 'MULTI_SELECT',
     generateOptions: (match) => [
       ...match.teamA.players.map((p) => ({
-        id: p.id,
         text: p.name,
-        team: 'A',
+        teamId: match.teamA.id,
+        teamSide: 'A',
       })),
       ...match.teamB.players.map((p) => ({
-        id: p.id,
         text: p.name,
-        team: 'B',
+        teamId: match.teamB.id,
+        teamSide: 'B',
       })),
+      {
+        text: 'Own Goal (Conceded by Team A)',
+        teamId: match.teamA.id,
+        teamSide: 'A',
+      },
+      {
+        text: 'Own Goal (Conceded by Team B)',
+        teamId: match.teamB.id,
+        teamSide: 'B',
+      },
     ],
   },
 

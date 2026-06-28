@@ -15,6 +15,8 @@ export class OptionsService {
       data: {
         text: dto.text,
         questionId: dto.questionId,
+        teamId: dto.teamId,
+        teamSide: dto.teamSide,
       },
     });
   }
