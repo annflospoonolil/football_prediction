@@ -15,7 +15,44 @@ model User {
   fullName   String
   createdAt  DateTime @default(now())
   answers    Answer[]
+  leaderboardScore LeaderboardScore?
+  leaderboardMatchScores LeaderboardMatchScore[]
   role       String @default("USER")
+}
+
+model LeaderboardScore {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId           String
+  email               String
+  name                String
+  role                String
+  score               Int      @default(0)
+  answersCount        Int      @default(0)
+  correctAnswersCount Int      @default(0)
+  snapshotAt          DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([score])
+  @@index([snapshotAt])
+}
+
+model LeaderboardMatchScore {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId     String
+  matchName   String
+  score       Int      @default(0)
+  snapshotAt  DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+  @@index([userId])
 }
 model Match {
   id         String   @id @default(uuid())

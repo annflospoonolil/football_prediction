@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { QUESTION_TEMPLATES } from './templates/question.templates';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 
 @Injectable()
 export class QuestionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private leaderboardService: LeaderboardService,
+  ) {}
 
   async generateForMatch(matchId: string, teamA: any, teamB: any) {
     const createdQuestions: any[] = [];
@@ -120,11 +124,15 @@ export class QuestionsService {
     });
   }
   async setCorrectText(questionId: string, answer: string) {
-    return this.prisma.question.update({
+    const question = await this.prisma.question.update({
       where: { id: questionId },
       data: {
         correctTextAnswer: answer,
       },
     });
+
+    await this.leaderboardService.refreshMatchScores(question.matchId);
+
+    return question;
   }
 }

@@ -2,11 +2,15 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnswerDto } from './dto/create-answer.dto';
 import { BadRequestException } from '@nestjs/common';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 
 // types/answer.types.ts
 @Injectable()
 export class AnswersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private leaderboardService: LeaderboardService,
+  ) {}
   async getUserAnswers(userId: string, matchId: string) {
     return this.prisma.answer.findMany({
       where: {
@@ -107,9 +111,22 @@ export class AnswersService {
     });
   }
 
-  private leaderboardCache: any = null;
-  private cacheTime = 0;
   async getLeaderboard() {
+    return this.leaderboardService.getLeaderboard();
+
+    const persistedScores = await this.prisma.leaderboardScore.findMany({
+      orderBy: [{ score: 'desc' }, { name: 'asc' }],
+      select: {
+        userId: true,
+        name: true,
+        score: true,
+      },
+    });
+
+    if (persistedScores.length > 0) {
+      return persistedScores;
+    }
+
     // This is the array data you just shared!
     const answers = await this.prisma.answer.findMany({
       include: {
