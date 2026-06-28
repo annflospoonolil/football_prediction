@@ -586,6 +586,7 @@ export default function Home({ onSelectMatch, onLogout }) {
                             month: "short",
                             hour: "2-digit",
                             minute: "2-digit",
+                            timeZone: "Asia/Kolkata",
                           })}
                         </p>
                       )}

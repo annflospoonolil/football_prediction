@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { QuestionsService } from '../questions/questions.service';
+import { parseKickoffAt } from '../utils/kickoff-time';
 
 @Injectable()
 export class MatchesService {
@@ -15,7 +16,7 @@ export class MatchesService {
       data: {
         teamAId: dto.teamAId,
         teamBId: dto.teamBId,
-        kickoffAt: new Date(dto.kickoffAt),
+        kickoffAt: parseKickoffAt(dto.kickoffAt),
       },
     });
 

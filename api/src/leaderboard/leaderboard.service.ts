@@ -20,11 +20,20 @@ export class LeaderboardService {
       },
     });
 
-    if (persistedScores.length > 0) {
+    const calculatedScores = await this.calculateLeaderboardFromAnswers();
+    const persistedHasPoints = persistedScores.some((entry) => entry.score > 0);
+    const calculatedHasPoints = calculatedScores.some((entry) => entry.score > 0);
+
+    if (persistedScores.length === 0) {
+      return calculatedScores;
+    }
+
+    if (persistedHasPoints || !calculatedHasPoints) {
       return persistedScores;
     }
 
-    return this.calculateLeaderboardFromAnswers();
+    await this.replaceLeaderboardSnapshot(calculatedScores);
+    return calculatedScores;
   }
 
   async refreshMatchScores(matchId: string) {
@@ -213,6 +222,56 @@ export class LeaderboardService {
         score: userScores[id].score,
       }))
       .sort((a, b) => b.score - a.score);
+  }
+
+  private async replaceLeaderboardSnapshot(
+    scores: Array<{ userId: string; name: string; score: number }>,
+  ) {
+    const snapshotAt = new Date();
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: {
+          in: scores.map((entry) => entry.userId),
+        },
+      },
+      select: {
+        id: true,
+        collegeId: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
+    const usersById = new Map(users.map((user) => [user.id, user]));
+
+    await this.prisma.$transaction(
+      scores.map((entry) => {
+        const user = usersById.get(entry.userId);
+
+        return this.prisma.leaderboardScore.upsert({
+          where: { userId: entry.userId },
+          create: {
+            userId: entry.userId,
+            collegeId: user?.collegeId || '',
+            email: user?.email || '',
+            name: user?.fullName || entry.name,
+            role: user?.role || 'USER',
+            score: entry.score,
+            answersCount: 0,
+            correctAnswersCount: 0,
+            snapshotAt,
+          },
+          update: {
+            collegeId: user?.collegeId || '',
+            email: user?.email || '',
+            name: user?.fullName || entry.name,
+            role: user?.role || 'USER',
+            score: entry.score,
+            snapshotAt,
+          },
+        });
+      }),
+    );
   }
 
   private scoreAnswer(answer: any): ScoreResult {

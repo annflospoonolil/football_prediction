@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 
+const toIstIsoOffset = (datetimeLocal) => {
+  if (!datetimeLocal) return "";
+  return `${datetimeLocal}${datetimeLocal.length === 16 ? ":00" : ""}+05:30`;
+};
+
 const AdminMultiSelectScorers = ({ q, m, api, loadMatchDetails }) => {
   const totalOptions = q.options || [];
 
@@ -362,7 +367,7 @@ export default function AdminDashboard() {
       setCreatingMatch(true);
       await api.post(
         "/admin/matches",
-        { teamAId, teamBId, kickoffAt },
+        { teamAId, teamBId, kickoffAt: toIstIsoOffset(kickoffAt) },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         },
@@ -415,6 +420,7 @@ export default function AdminDashboard() {
     return new Date(date).toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
+      timeZone: "Asia/Kolkata",
     });
   };
   const createOption = async () => {

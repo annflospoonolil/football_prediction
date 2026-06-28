@@ -357,6 +357,7 @@ export default function Match({ matchId, goBack }) {
                       month: "short",
                       hour: "2-digit",
                       minute: "2-digit",
+                      timeZone: "Asia/Kolkata",
                     })}
                   </p>
                 )}
